@@ -1,5 +1,7 @@
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 const path = require('path')
+const ipc = ipcMain
+const zip = require('./zip.js')
 
 const createWindow = () =>{
     const win = new BrowserWindow({
@@ -22,4 +24,10 @@ app.whenReady().then(()=>{
 app.on('window-all-closed', _=>{
     if(process.platform !== 'darwin')
         app.quit()
+})
+
+ipc.on('zip', _=>{
+    zip(path=>{
+        return "test..."
+    })
 })
