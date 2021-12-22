@@ -61,24 +61,63 @@ namespace ExtractWpf
         private void ZipClicked(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(FileOrFolderPath))
-            {
-                throw new ApplicationException("No file/folder selected");
-            }
+                return;
             if (!File.Exists(FileOrFolderPath) && !Directory.Exists(FileOrFolderPath))
-            {
-                throw new ApplicationException("File/Folder doesn't exist");
-            }
+                return;
+            
             //good to go!!;
             if (Directory.Exists(FileOrFolderPath))
             {
-                ZipFile.CreateFromDirectory(FileOrFolderPath, Path.Combine(FileOrFolderPath, $"{Path.GetDirectoryName(FileOrFolderPath)}.zip"));
+                var zipFileName = Path.Combine(FileOrFolderPath, $"{Path.GetDirectoryName(FileOrFolderPath)}.zip");
+                if (File.Exists(zipFileName))
+                {
+                    //Delete file
+                    File.Delete(zipFileName);
+                }
+                ZipFile.CreateFromDirectory(FileOrFolderPath, zipFileName);
             }
-            //TODO file...
+            else
+            {
+                //Create folder with same name if it doesn't exist
+                //if it exists, remove it
+                var parentFolder = Path.GetDirectoryName(FileOrFolderPath);
+                if (string.IsNullOrEmpty(parentFolder)) return;
+                var folderName = Path.Combine(parentFolder, $"{Path.GetFileNameWithoutExtension(FileOrFolderPath)}");
+                if(Directory.Exists(folderName))
+                    Directory.Delete(folderName, true);
+                Directory.CreateDirectory(folderName);
+                //copy file into folder
+                File.Copy(FileOrFolderPath, Path.Combine(folderName, Path.GetFileName(FileOrFolderPath) ?? "filename"));
+                //Zip folder
+                var zipFileName = Path.Combine(parentFolder, $"{Path.GetFileNameWithoutExtension(FileOrFolderPath)}.zip");
+                ZipFile.CreateFromDirectory(folderName, zipFileName);
+                //Delete folder
+                Directory.Delete(folderName, true);
+            }
         }
 
         private void UnzipClicked(object sender, RoutedEventArgs e)
         {
-            throw new System.NotImplementedException();
+            if (string.IsNullOrEmpty(FileOrFolderPath))
+                return;
+            var fileExtension = Path.GetExtension(FileOrFolderPath);
+            if (string.IsNullOrEmpty(fileExtension))
+                return;
+            if (!fileExtension.ToLower().Equals(".zip"))
+                return;
+            //good to go...
+            var parentFolder = Path.GetDirectoryName(FileOrFolderPath);
+            if (string.IsNullOrEmpty(parentFolder))
+                return;
+            var filenameWithoutExtension = Path.GetFileNameWithoutExtension(FileOrFolderPath);
+            if (string.IsNullOrEmpty(filenameWithoutExtension))
+                return;
+            var folderName = Path.Combine(parentFolder, filenameWithoutExtension);
+            if (Directory.Exists(folderName))
+            {
+                Directory.Delete(folderName, true);
+            }
+            ZipFile.ExtractToDirectory(FileOrFolderPath, folderName);
         }
     }
 }
